@@ -143,7 +143,10 @@ int score = 0;
 
 //////////////////////////////////////////////////////
 
+dll::RANDIt RandMachine{};
 
+dll::BASE Intro(intro_type, 0, 0);
+dll::BASE* Field;
 
 
 //////////////////////////////////////////////////////
@@ -273,6 +276,31 @@ void InitGame()
     name_set = false;
     score = 0;
 
+    /////////////////////////////////////////////
+
+    if (Field)delete Field;
+    switch (RandMachine(0, 4))
+    {
+    case 0:
+        Field = new dll::BASE(field1_type, 0, 50.0f);
+        break;
+
+    case 1:
+        Field = new dll::BASE(field2_type, 0, 50.0f);
+        break;
+
+    case 2:
+        Field = new dll::BASE(field3_type, 0, 50.0f);
+        break;
+
+    case 3:
+        Field = new dll::BASE(field4_type, 0, 50.0f);
+        break;
+
+    case 4:
+        Field = new dll::BASE(field5_type, 0, 50.0f);
+        break;
+    }
 
 
 
@@ -591,10 +619,10 @@ void CreateResources()
                     hr = Draw->CreateRadialGradientBrush(D2D1::RadialGradientBrushProperties(D2D1::Point2F((b1Rect.right
                         - b1Rect.left) / 2, 25.0f), D2D1::Point2F(0, 0), (b1Rect.right - b1Rect.left) / 2, 25.0f),
                         Coll, &but1BckgBrush);
-                    hr = Draw->CreateRadialGradientBrush(D2D1::RadialGradientBrushProperties(D2D1::Point2F((b2Rect.right
+                    hr = Draw->CreateRadialGradientBrush(D2D1::RadialGradientBrushProperties(D2D1::Point2F(b2Rect.left + (b2Rect.right
                         - b2Rect.left) / 2, 25.0f), D2D1::Point2F(0, 0), (b2Rect.right - b2Rect.left) / 2, 25.0f),
                         Coll, &but2BckgBrush);
-                    hr = Draw->CreateRadialGradientBrush(D2D1::RadialGradientBrushProperties(D2D1::Point2F((b3Rect.right
+                    hr = Draw->CreateRadialGradientBrush(D2D1::RadialGradientBrushProperties(D2D1::Point2F(b3Rect.left + (b3Rect.right
                         - b3Rect.left) / 2, 25.0f), D2D1::Point2F(0, 0), (b3Rect.right - b3Rect.left) / 2, 25.0f),
                         Coll, &but3BckgBrush);
                     if (hr != S_OK)
@@ -607,8 +635,8 @@ void CreateResources()
                 }
 
                 hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DarkCyan), &statBckgBrush);
-                hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::ForestGreen), &txtBrush);
-                hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::IndianRed), &hgltBrush);
+                hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Green), &txtBrush);
+                hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::Red), &hgltBrush);
                 hr = Draw->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::DarkGray), &inactBrush);
 
                 if (hr != S_OK)
@@ -1359,15 +1387,29 @@ void CreateResources()
         }
     }
 
+    wchar_t init_txt[38]{ L"ФАНТАСТИЧНА БИТКА\n\n     dev. Daniel !" };
+    wchar_t show_txt[38]{ L"\0" };
 
+    bool intro_ok{ false };
+    result = 0;
 
+    while(!intro_ok)
+    {
+        if (Draw && bigTxtFormat && txtBrush)
+        {
+            show_txt[result] = init_txt[result];
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(show_txt, result + 1, bigTxtFormat, D2D1::RectF(20.0f, 200.0f, scr_width, scr_height), txtBrush);
+            Draw->EndDraw();
+            if (show_txt[result] != ' ')PlaySound(L".\\res\\snd\\click.wav", NULL, SND_SYNC);
+            ++result;
+        }
 
-
-
-
-
-
-
+        if (result >= 37)intro_ok = true;
+    }
+    
+    PlaySound(L".\\res\\snd\\intro.wav", NULL, SND_SYNC);
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nCmdShow)
@@ -1380,6 +1422,79 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
     }
 
 
+    CreateResources();
+
+    while (bMsg.message != WM_QUIT)
+    {
+        if ((bRet = PeekMessage(&bMsg, bHwnd, NULL, NULL, PM_REMOVE)) != 0)
+        {
+            if (bRet == -1)ErrExit(eMsg);
+
+            TranslateMessage(&bMsg);
+            DispatchMessage(&bMsg);
+        }
+
+        if (pause)
+        {
+            if (show_help)continue;
+            if (Draw && txtBrush && bigTxtFormat)
+            {
+                Draw->BeginDraw();
+                Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+                Draw->DrawTextW(L"ПАУЗА", 6, bigTxtFormat, D2D1::RectF(scr_width / 2 - 150.0f, scr_height / 2 - 100.0f, scr_width, scr_height),
+                    txtBrush);
+                Draw->EndDraw();
+            }
+            continue;
+        }
+
+        // DRAW THINGS *****************************************************
+
+        Draw->BeginDraw();
+
+        if (txtBrush && hgltBrush && inactBrush && nrmTxtFormat && statBckgBrush && but1BckgBrush && but2BckgBrush && but3BckgBrush)
+        {
+            Draw->FillRectangle(D2D1::RectF(0, 0, scr_width, 50.0f), statBckgBrush);
+            Draw->FillRoundedRectangle(D2D1::RoundedRect(b1Rect, 10.0f, 15.0f), but1BckgBrush);
+            Draw->FillRoundedRectangle(D2D1::RoundedRect(b2Rect, 10.0f, 15.0f), but2BckgBrush);
+            Draw->FillRoundedRectangle(D2D1::RoundedRect(b3Rect, 10.0f, 15.0f), but3BckgBrush);
+
+            if (name_set)Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, inactBrush);
+            else
+            {
+                if (b1Hglt)Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, hgltBrush);
+                else Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, txtBrush);
+            }
+            if (b2Hglt)Draw->DrawTextW(L"ЗВУЦИ ON / OFF", 15, nrmTxtFormat, b2TxtRect, hgltBrush);
+            else Draw->DrawTextW(L"ЗВУЦИ ON / OFF", 15, nrmTxtFormat, b2TxtRect, txtBrush);
+            if (b3Hglt)Draw->DrawTextW(L"ПОМОЩ ЗА ИГРАТА", 16, nrmTxtFormat, b3TxtRect, hgltBrush);
+            else Draw->DrawTextW(L"ПОМОЩ ЗА ИГРАТА", 16, nrmTxtFormat, b3TxtRect, txtBrush);
+        }
+
+        switch (Field->GetType())
+        {
+        case field1_type:
+            Draw->DrawBitmap(bmpField1[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+            break;
+
+        case field2_type:
+            Draw->DrawBitmap(bmpField2[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+            break;
+
+        case field3_type:
+            Draw->DrawBitmap(bmpField3[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+            break;
+
+        case field4_type:
+            Draw->DrawBitmap(bmpField4[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+            break;
+
+        case field5_type:
+            Draw->DrawBitmap(bmpField5[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+            break;
+        }
+
+        ////////////////////////////////////////////////////////////////////
 
 
 
@@ -1388,6 +1503,10 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
 
 
+        //////////////////////////////////////////////////////////////////
+        
+        Draw->EndDraw();
+    }
 
     ClearResources();
     std::remove(tmp_file);
