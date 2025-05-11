@@ -216,8 +216,8 @@ void ClearResources()
     for (int i = 0; i < 21; ++i)if (!ClearHeap(&bmpEvDragonL[i]))LogError(L"Error releasing bmpEvDragonL !");
     for (int i = 0; i < 21; ++i)if (!ClearHeap(&bmpEvDragonR[i]))LogError(L"Error releasing bmpEvDragonR !");
 
-    for (int i = 0; i < 60; ++i)if (!ClearHeap(&bmpEvHydraL[i]))LogError(L"Error releasing bmpEvHydraL !");
-    for (int i = 0; i < 60; ++i)if (!ClearHeap(&bmpEvHydraR[i]))LogError(L"Error releasing bmpEvHydraR !");
+    for (int i = 0; i < 12; ++i)if (!ClearHeap(&bmpEvHydraL[i]))LogError(L"Error releasing bmpEvHydraL !");
+    for (int i = 0; i < 12; ++i)if (!ClearHeap(&bmpEvHydraR[i]))LogError(L"Error releasing bmpEvHydraR !");
 
     for (int i = 0; i < 6; ++i)if (!ClearHeap(&bmpEvMageL[i]))LogError(L"Error releasing bmpEvMageL !");
     for (int i = 0; i < 6; ++i)if (!ClearHeap(&bmpEvMageR[i]))LogError(L"Error releasing bmpEvMageR !");
@@ -305,6 +305,8 @@ void InitGame()
 
 
 
+
+  
 }
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
