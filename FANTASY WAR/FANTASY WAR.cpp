@@ -148,6 +148,8 @@ dll::RANDIt RandMachine{};
 dll::BASE Intro(intro_type, 0, 0);
 dll::BASE* Field;
 
+std::vector<dll::Creatures> vGoodArmy;
+std::vector<dll::Creatures> vEvilArmy;
 
 //////////////////////////////////////////////////////
 
@@ -302,11 +304,333 @@ void InitGame()
         break;
     }
 
+    //CREATE GOOD ARMY *************************
 
+    if (!vGoodArmy.empty())for (int i = 0; i < vGoodArmy.size(); ++i)ClearHeap(&vGoodArmy[i]);
 
+    while (vGoodArmy.size() < 10)
+    {
+        dll::Creatures OneWarrior{ nullptr };
 
+        float temp_x = (float)(RandMachine(10, 450));
+        float temp_y = (float)(RandMachine(500, 700));
 
-  
+        switch (RandMachine(0, 6))
+        {
+        case 0:
+            OneWarrior = dll::CreatureFactory(gd_archer_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 1:
+            OneWarrior = dll::CreatureFactory(gd_dragon_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok)vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 2:
+            OneWarrior = dll::CreatureFactory(gd_horse_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 3:
+            OneWarrior = dll::CreatureFactory(gd_hydra_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 4:
+            OneWarrior = dll::CreatureFactory(gd_minotaur_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 5:
+            OneWarrior = dll::CreatureFactory(gd_unicorn_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+
+        case 6:
+            OneWarrior = dll::CreatureFactory(gd_warrior_type, temp_x, temp_y);
+            if (!vGoodArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vGoodArmy.push_back(OneWarrior);
+            }
+            else vGoodArmy.push_back(OneWarrior);
+            break;
+        }
+    }
+    
+    /////////////////////////////////////////////
+
+    //CREATE EVIL ARMY *************************
+
+    if (!vEvilArmy.empty())for (int i = 0; i < vEvilArmy.size(); ++i)ClearHeap(&vEvilArmy[i]);
+
+    while (vEvilArmy.size() < 10)
+    {
+        dll::Creatures OneWarrior{ nullptr };
+
+        float temp_x = (float)(RandMachine(510, 1000));
+        float temp_y = (float)(RandMachine(500, 700));
+
+        switch (RandMachine(0, 6))
+        {
+        case 0:
+            OneWarrior = dll::CreatureFactory(ev_archer_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 1:
+            OneWarrior = dll::CreatureFactory(ev_dragon_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok)vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 2:
+            OneWarrior = dll::CreatureFactory(ev_coyote_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 3:
+            OneWarrior = dll::CreatureFactory(ev_hydra_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 4:
+            OneWarrior = dll::CreatureFactory(ev_minotaur_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 5:
+            OneWarrior = dll::CreatureFactory(ev_mage_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+
+        case 6:
+            OneWarrior = dll::CreatureFactory(gd_warrior_type, temp_x, temp_y);
+            if (!vEvilArmy.empty())
+            {
+                bool is_ok = true;
+
+                for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); gd++)
+                {
+                    if (abs(OneWarrior->center.x - (*gd)->center.x) <= OneWarrior->x_radius + (*gd)->x_radius
+                        && abs(OneWarrior->center.y - (*gd)->center.y) <= OneWarrior->y_radius + (*gd)->y_radius)
+                    {
+                        is_ok = false;
+                        break;
+                    }
+                }
+
+                if (is_ok) vEvilArmy.push_back(OneWarrior);
+            }
+            else vEvilArmy.push_back(OneWarrior);
+            break;
+        }
+    }
+
+    /////////////////////////////////////////////
 }
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
@@ -1404,7 +1728,7 @@ void CreateResources()
             Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
             Draw->DrawTextW(show_txt, result + 1, bigTxtFormat, D2D1::RectF(20.0f, 200.0f, scr_width, scr_height), txtBrush);
             Draw->EndDraw();
-            if (show_txt[result] != ' ')PlaySound(L".\\res\\snd\\click.wav", NULL, SND_SYNC);
+            if (show_txt[result] != ' ' && show_txt[result] != '\n')PlaySound(L".\\res\\snd\\click.wav", NULL, SND_SYNC);
             ++result;
         }
 
@@ -1450,6 +1774,24 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             continue;
         }
 
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         // DRAW THINGS *****************************************************
 
         Draw->BeginDraw();
@@ -1498,8 +1840,110 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
         ////////////////////////////////////////////////////////////////////
 
+        if (!vGoodArmy.empty())
+        {
+            for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); ++gd)
+            {
+                int aframe = (*gd)->GetFrame();
 
+                switch ((*gd)->GetType())
+                {
+                case gd_archer_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdArcherR[aframe], Resizer(bmpGdArcherR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdArcherL[aframe], Resizer(bmpGdArcherL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
 
+                case gd_dragon_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdDragonR[aframe], Resizer(bmpGdDragonR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdDragonL[aframe], Resizer(bmpGdDragonL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case gd_horse_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdHorseR[aframe], Resizer(bmpGdHorseR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdHorseL[aframe], Resizer(bmpGdHorseL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case gd_hydra_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdHydraR[aframe], Resizer(bmpGdHydraR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdHydraL[aframe], Resizer(bmpGdHydraL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case gd_minotaur_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdMinotaurR[aframe], Resizer(bmpGdMinotaurR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdMinotaurL[aframe], Resizer(bmpGdMinotaurL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case gd_unicorn_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdUnicornR[aframe], Resizer(bmpGdUnicornR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdUnicornL[aframe], Resizer(bmpGdUnicornL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case gd_warrior_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpGdWarriorR[aframe], Resizer(bmpGdWarriorR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpGdWarriorL[aframe], Resizer(bmpGdWarriorL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+                }
+            }
+        }
+        if (!vEvilArmy.empty())
+        {
+            for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); ++gd)
+            {
+                int aframe = (*gd)->GetFrame();
+
+                switch ((*gd)->GetType())
+                {
+                case ev_archer_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvArcherR[aframe], Resizer(bmpEvArcherR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvArcherL[aframe], Resizer(bmpEvArcherL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_dragon_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvDragonR[aframe], Resizer(bmpEvDragonR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvDragonL[aframe], Resizer(bmpEvDragonL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_coyote_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvCoyotteR[aframe], Resizer(bmpEvCoyotteR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvCoyotteL[aframe], Resizer(bmpEvCoyotteL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_hydra_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvHydraR[aframe], Resizer(bmpEvHydraR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvHydraL[aframe], Resizer(bmpEvHydraL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_minotaur_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvMinotaurR[aframe], Resizer(bmpEvMinotaurR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvMinotaurL[aframe], Resizer(bmpEvMinotaurL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_mage_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvMageR[aframe], Resizer(bmpEvMageR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvMageL[aframe], Resizer(bmpEvMageL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+
+                case ev_warrior_type:
+                    if ((*gd)->dir == dirs::right)
+                        Draw->DrawBitmap(bmpEvWarriorR[aframe], Resizer(bmpEvWarriorR[aframe], (*gd)->start.x, (*gd)->start.y));
+                    else Draw->DrawBitmap(bmpEvWarriorL[aframe], Resizer(bmpEvWarriorL[aframe], (*gd)->start.x, (*gd)->start.y));
+                    break;
+                }
+            }
+        }
 
 
 

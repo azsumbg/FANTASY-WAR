@@ -7,6 +7,7 @@
 #endif
 
 #include <random>
+#include <type_traits>
 
 constexpr float scr_width{ 1000.0f };
 constexpr float scr_height{ 800.0f };
@@ -43,7 +44,6 @@ constexpr uint8_t gd_unicorn_type{ 21 };
 constexpr uint8_t gd_minotaur_type{ 22 };
 constexpr uint8_t gd_warrior_type{ 23 };
 
-
 enum class dirs { stop = 0, up = 1, down = 2, left = 3, right = 4 };
 enum class states { move = 0, attack = 1, heal = 2, flee = 3, stop = 4, shoot = 5,next_turn = 6 };
 
@@ -79,6 +79,8 @@ namespace dll
 
 		bool is_valid{ false };
 
+		bool is_generic = false;
+
 	public:
 		GROUPPER();
 		GROUPPER(size_t lenght);
@@ -87,6 +89,8 @@ namespace dll
 		size_t capacity() const;
 		size_t size() const;
 		bool valid() const;
+
+		bool IsGeneric() const;
 
 		void push_back(T element);
 		void push_front(T element);
@@ -101,6 +105,38 @@ namespace dll
 		void operator()(size_t index, T element);
 	};
 
+	template<typename T> bool SortVarDistance(GROUPPER<T>& bag)
+	{
+		if constexpr (!(std::is_same<T, int>::value || std::is_same<T, float>::value || std::is_same<T, double>::value
+			|| std::is_same<T, char>::value || std::is_same<T, wchar_t>::value))return false;
+		else
+		{
+			bool is_ok = false;
+
+			if (bag.valid() && bag.size() > 2)
+			{
+				while (!is_ok)
+				{
+					is_ok = true;
+
+					for (size_t i = 0; i < bag.size() - 1; ++i)
+					{
+						if (bag[i] > bag[i + 1])
+						{
+							T temp = bag[i];
+							bag[i] = bag[i + 1];
+							bag[i + 1] = temp;
+							is_ok = false;
+							break;
+						}
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+	
 	float HELPSRV_API Distance(FPOINT start_point, FPOINT target_point);
 
 	bool HELPSRV_API Sort(GROUPPER<FPOINT>& bag, FPOINT target);
@@ -264,10 +300,21 @@ namespace dll
 	template<typename T> dll::GROUPPER<T>::GROUPPER() :max_size{ 1 }, mPtr{ reinterpret_cast<T*>(calloc(1,sizeof(T))) }
 	{
 		if (mPtr)is_valid = true;
+
+		if (typeid(T()).name() == typeid(char()).name() ||
+			typeid(T()).name() == typeid(wchar_t()).name() || typeid(T()).name() == typeid(float()).name()
+			|| typeid(T()).name() == typeid(double()).name()
+			|| typeid(T()).name() == typeid(int()).name())is_generic = true;
 	}
-	template<typename T> dll::GROUPPER<T>::GROUPPER(size_t lenght) : max_size{ lenght }, mPtr{ reinterpret_cast<T*>(calloc(lenght,sizeof(T))) }
+	template<typename T> dll::GROUPPER<T>::GROUPPER(size_t lenght) : max_size{ lenght }, 
+		mPtr{ reinterpret_cast<T*>(calloc(lenght,sizeof(T))) }
 	{
 		if (mPtr)is_valid = true;
+
+		if (typeid(T()).name() == typeid(char()).name() ||
+			typeid(T()).name() == typeid(wchar_t()).name() || typeid(T()).name() == typeid(float()).name()
+			|| typeid(T()).name() == typeid(double()).name()
+			|| typeid(T()).name() == typeid(int()).name())is_generic = true;
 	}
 	template<typename T> dll::GROUPPER<T>::~GROUPPER()
 	{
@@ -297,24 +344,29 @@ namespace dll
 			next_pos++;
 			return;
 		}
-
-		T* tempPtr{ reinterpret_cast<T*>(calloc(max_size + 1,sizeof(T))) };
-		for (size_t count = 0; count < max_size; ++count)tempPtr[count] = mPtr[count];
-
-		tempPtr[max_size] = element;
-		mPtr = tempPtr;
-		++max_size;
-		++next_pos;
+		else
+		{
+			T* tempPtr{ reinterpret_cast<T*>(realloc(mPtr,(max_size + 1) * sizeof(T))) };
+			
+			tempPtr[next_pos] = element;
+			mPtr = tempPtr;
+			++max_size;
+			++next_pos;
+		}
 	}
 	template<typename T> void dll::GROUPPER<T>::push_front(T element)
 	{
 		if (is_valid)*mPtr = element;
 	}
+	template<typename T> bool GROUPPER<T>::IsGeneric() const
+	{
+			return is_generic;
+	}
 
 	template<typename T> T& dll::GROUPPER<T>::operator[](size_t index)
 	{
 		T* dummy{ reinterpret_cast<T*>(calloc(1,sizeof(T))) };
-		if (index < next_pos)return mPtr[index];
+		if (index < next_pos)return *(mPtr + index);
 
 		return *dummy;
 	}
