@@ -236,7 +236,6 @@ namespace dll
 
 		int move_points{ 0 };
 		int max_move_points{ 0 };
-		int attack_delay{ 0 };
 		int heal_delay{ 0 };
 
 		int max_lifes{ 0 };
@@ -250,7 +249,7 @@ namespace dll
 		virtual ~CREATURE() {};
 
 		bool Move(float _to_x, float _to_y);
-		int Attack();
+		int Attack() const;
 		void Heal();
 		int GetMaxLifes()const;
 		virtual states AINextMove(GROUPPER<FPOINT>& Enemies) = 0;
