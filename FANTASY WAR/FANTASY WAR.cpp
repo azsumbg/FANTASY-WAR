@@ -327,8 +327,8 @@ void InitGame()
     {
         dll::Creatures OneWarrior{ nullptr };
 
-        float temp_x = (float)(RandMachine(10, 450));
-        float temp_y = (float)(RandMachine(500, 700));
+        float temp_x = (float)(RandMachine(0, 500));
+        float temp_y = (float)(RandMachine(480, 750));
 
         switch (RandMachine(0, 6))
         {
@@ -492,7 +492,7 @@ void InitGame()
     {
         dll::Creatures OneWarrior{ nullptr };
 
-        float temp_x = (float)(RandMachine(510, 1000));
+        float temp_x = (float)(RandMachine(510, 950));
         float temp_y = (float)(RandMachine(480, 750));
 
         switch (RandMachine(0, 6))
@@ -1872,7 +1872,18 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 (*ev)->center.x, (*ev)->center.y, EnemyLoc.begin().x, EnemyLoc.begin().y));
                             else if ((*ev)->GetType() == ev_mage_type)vEvilShots.push_back(dll::ShotFactory(fireball_type,
                                 (*ev)->center.x, (*ev)->center.y, EnemyLoc.begin().x, EnemyLoc.begin().y));
+                            
                             vEvilShots.back()->strenght = (*ev)->Attack();
+                            if (vEvilShots.back()->GetType() == fireball_type)
+                            {
+                                if ((*ev)->center.x > EnemyLoc.begin().x)vEvilShots.back()->dir = dirs::left;
+                                else vEvilShots.back()->dir = dirs::right;                   
+                            }
+                            else
+                            {
+                                if ((*ev)->center.x > EnemyLoc.begin().x)vEvilShots.back()->dir = dirs::up_left;
+                                else vEvilShots.back()->dir = dirs::up_right;
+                            }
                         }
                         else if (what_to_do == states::attack)
                         {
@@ -1922,7 +1933,22 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             evil_next_turn_ready = false;
         }
         
+        // SHOTS ************************************
         
+        if (!vEvilShots.empty())
+        {
+            for (std::vector<dll::Shot>::iterator shot = vEvilShots.begin(); shot < vEvilShots.end(); ++shot)
+            {
+                if (!(*shot)->Move())
+                {
+                    (*shot)->Release();
+                    vEvilShots.erase(shot);
+                    break;
+                }
+
+
+            }
+        }
         
         
         
@@ -2093,6 +2119,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             {
                 int aframe = (*shot)->GetFrame();
 
+                switch ((*shot)->GetType())
+                {
+                case fireball_type:
+                    Draw->DrawBitmap(bmpFireball[aframe], Resizer(bmpFireball[aframe], (*shot)->start.x, (*shot)->start.y));
+                    break;
+
+                case ev_arrow_type:
+                    if ((*shot)->dir == dirs::up_left)Draw->DrawBitmap(bmpEvArrowLU, D2D1::RectF((*shot)->start.x,
+                        (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                    else if ((*shot)->dir == dirs::up_right)Draw->DrawBitmap(bmpEvArrowRU, D2D1::RectF((*shot)->start.x,
+                        (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                    else if ((*shot)->dir == dirs::down_left)Draw->DrawBitmap(bmpEvArrowLD, D2D1::RectF((*shot)->start.x,
+                        (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                    else if ((*shot)->dir == dirs::down_right)Draw->DrawBitmap(bmpEvArrowRD, D2D1::RectF((*shot)->start.x,
+                        (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                    break;
+                }
             }
         }
 
