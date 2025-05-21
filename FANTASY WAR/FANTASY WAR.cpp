@@ -1939,14 +1939,43 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         {
             for (std::vector<dll::Shot>::iterator shot = vEvilShots.begin(); shot < vEvilShots.end(); ++shot)
             {
+                bool someone_killed = false;
+
                 if (!(*shot)->Move())
                 {
                     (*shot)->Release();
                     vEvilShots.erase(shot);
                     break;
                 }
+                else
+                {
+                    if (!vGoodArmy.empty())
+                    {    
+                        for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); ++gd)
+                        {
+                            if ((*shot)->center.x >= (*gd)->start.x && (*shot)->center.x <= (*gd)->end.x
+                                && (*shot)->center.y >= (*gd)->start.y && (*shot)->center.y <= (*gd)->end.y)
+                            {
+                                (*gd)->lifes -= (*shot)->strenght;
+                                
+                                (*shot)->Release();
+                                vEvilShots.erase(shot);
 
+                                if ((*gd)->lifes <= 0)
+                                {
+                                    (*gd)->Release();
+                                    vGoodArmy.erase(gd);
+                                }
 
+                                someone_killed = true;
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (someone_killed)break;
             }
         }
         
