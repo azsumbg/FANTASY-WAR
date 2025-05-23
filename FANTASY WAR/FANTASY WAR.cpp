@@ -160,6 +160,8 @@ int evil_next_turn = 0;
 bool good_next_turn_ready = false;
 bool evil_next_turn_ready = false;
 
+int current_gd_creature = -1;
+
 //////////////////////////////////////////////////////
 
 template<typename T>concept HasRelease = requires(T var)
@@ -328,7 +330,7 @@ void InitGame()
         dll::Creatures OneWarrior{ nullptr };
 
         float temp_x = (float)(RandMachine(0, 500));
-        float temp_y = (float)(RandMachine(480, 750));
+        float temp_y = (float)(RandMachine(450, 700));
 
         switch (RandMachine(0, 6))
         {
@@ -493,7 +495,7 @@ void InitGame()
         dll::Creatures OneWarrior{ nullptr };
 
         float temp_x = (float)(RandMachine(510, 950));
-        float temp_y = (float)(RandMachine(480, 750));
+        float temp_y = (float)(RandMachine(450, 700));
 
         switch (RandMachine(0, 6))
         {
@@ -872,7 +874,21 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         }
         else
         {
+            if (!vGoodArmy.empty())
+            {
+                FPOINT cursor{ (float)(LOWORD(lParam)),(float)(HIWORD(lParam)) };
 
+                for (int i = 0; i < vGoodArmy.size(); ++i)
+                {
+                    if (cursor.x >= vGoodArmy[i]->start.x && cursor.x <= vGoodArmy[i]->end.x
+                        && cursor.y >= vGoodArmy[i]->start.y && cursor.y <= vGoodArmy[i]->end.y)
+                    {
+                        current_gd_creature = i;
+                        if (sound)mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
+                        break;
+                    }
+                }
+            }
         }
         break;
 
@@ -1751,8 +1767,9 @@ void CreateResources()
             Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
             Draw->DrawTextW(show_txt, result + 1, bigTxtFormat, D2D1::RectF(20.0f, 200.0f, scr_width, scr_height), txtBrush);
             Draw->EndDraw();
-            if (show_txt[result] != ' ' && show_txt[result] != '\n')PlaySound(L".\\res\\snd\\click.wav", NULL, SND_SYNC);
+            if (show_txt[result] != ' ' && show_txt[result] != '\n')mciSendString(L"play .\\res\\snd\\click.wav", NULL, NULL, NULL);
             ++result;
+            Sleep(40);
         }
 
         if (result >= 37)intro_ok = true;
@@ -1866,7 +1883,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                         }
                         else if (what_to_do == states::move) (*ev)->Move(EnemyLoc.begin().x, EnemyLoc.begin().y);
                         else if (what_to_do == states::heal)(*ev)->Heal();
-                        else if (what_to_do == states::shoot && RandMachine(0, 10) == 6)
+                        else if (what_to_do == states::shoot)
                         {
                             if ((*ev)->GetType() == ev_archer_type)vEvilShots.push_back(dll::ShotFactory(ev_arrow_type,
                                 (*ev)->center.x, (*ev)->center.y, EnemyLoc.begin().x, EnemyLoc.begin().y));
@@ -1923,16 +1940,28 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
                 else GameOver();
             }
-            else good_next_turn_ready = false;
+            else
+            {
+                if (!vGoodArmy.empty())
+                    for (int i = 0; i < vGoodArmy.size(); ++i)vGoodArmy[i]->state = states::heal;
+                good_next_turn_ready = false;
+            }
         }
         
-        if (!good_next_turn_ready)
+        if (!vGoodArmy.empty())
         {
-            if (!vEvilArmy.empty())
-                for (int i = 0; i < vEvilArmy.size(); ++i)vEvilArmy[i]->state = states::heal;
-            evil_next_turn_ready = false;
+            if (!good_next_turn_ready)
+            {
+               
+            }
+            else
+            {
+                if (!vEvilArmy.empty())
+                    for (int i = 0; i < vEvilArmy.size(); ++i)vEvilArmy[i]->state = states::heal;
+                evil_next_turn_ready = false;
+            }
         }
-        
+
         // SHOTS ************************************
         
         if (!vEvilShots.empty())
@@ -2089,6 +2118,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
             }
         }
+        if (!vGoodArmy.empty())
+        {
+            for (int i = 0; i < vGoodArmy.size(); ++i)
+            {
+                wchar_t add[5] = L"\0";
+                int lsize = 0;
+                wsprintf(add, L"%d", vGoodArmy[i]->lifes);
+                for (int j = 0; j < 5; j++)
+                {
+                    if (add[j] != '\0')lsize++;
+                    else break;
+                }
+                Draw->DrawTextW(add, lsize, nrmTxtFormat, D2D1::RectF(vGoodArmy[i]->center.x - 30.0f, vGoodArmy[i]->end.y + 5.0f,
+                    vGoodArmy[i]->center.x + 30.0f, vGoodArmy[i]->end.y + 5.0f), txtBrush);
+            }
+            if (current_gd_creature >= 0)Draw->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(vGoodArmy[current_gd_creature]->center.x,
+                vGoodArmy[current_gd_creature]->center.y), vGoodArmy[current_gd_creature]->x_radius,
+                vGoodArmy[current_gd_creature]->y_radius), txtBrush, 3.0f);
+        }
+        
         if (!vEvilArmy.empty())
         {
             for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); ++gd)
@@ -2141,6 +2190,23 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
             }
         }
+        if (!vEvilArmy.empty())
+        {
+            for (int i = 0; i < vEvilArmy.size(); ++i)
+            {
+                wchar_t add[5] = L"\0";
+                int lsize = 0;
+                wsprintf(add, L"%d", vEvilArmy[i]->lifes);
+                for (int j = 0; j < 5; j++)
+                {
+                    if (add[j] != '\0')lsize++;
+                    else break;
+                }
+                Draw->DrawTextW(add, lsize, nrmTxtFormat, D2D1::RectF(vEvilArmy[i]->center.x - 30.0f, vEvilArmy[i]->end.y + 5.0f,
+                    vEvilArmy[i]->center.x + 30.0f, vEvilArmy[i]->end.y + 5.0f), hgltBrush);
+            }
+        }
+
 
         if (!vEvilShots.empty())
         {
