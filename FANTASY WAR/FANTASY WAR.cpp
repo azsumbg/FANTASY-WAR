@@ -332,7 +332,7 @@ void GameOver()
             Draw->EndDraw();
 
             if (sound)PlaySound(L".\\res\\snd\\victory.wav", NULL, SND_SYNC);
-            else Sleep(2000);
+            Sleep(2000);
         }
     }
     else
@@ -346,7 +346,7 @@ void GameOver()
             Draw->EndDraw();
 
             if (sound)PlaySound(L".\\res\\snd\\defeat.wav", NULL, SND_SYNC);
-            else Sleep(2000);
+            Sleep(2000);
         }
     }
 
@@ -772,6 +772,57 @@ void InitGame()
     if (!vGoodShots.empty())for (int i = 0; i < vGoodShots.size(); ++i)ClearHeap(&vGoodShots[i]);
     vGoodShots.clear();
 }
+void HallOfFame()
+{
+    int result = 0;
+    CheckFile(record_file, &result);
+    if (result == FILE_NOT_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+        MessageBox(bHwnd, L"Все още няма рекорд на играта !\n\nПостарай се повече !", L"Липсва файл !",
+            MB_OK | MB_APPLMODAL | MB_ICONEXCLAMATION);
+        return;
+    }
+
+    if (sound)mciSendString(L"play .\\res\\snd\\showrec.wav", NULL, NULL, NULL);
+
+    wchar_t rec_txt[150] = L"НАЙ-ВЕЛИК КРАЛ: ";
+    wchar_t saved_player[16] = L"\0";
+    wchar_t add[5] = L"\0";
+    int rec_size = 0;
+
+    std::wifstream rec(record_file);
+    rec >> result;
+    for (int i = 0; i < 16; ++i)
+    {
+        int letter = 0;
+        rec >> letter;
+        saved_player[i] = static_cast<wchar_t>(letter);
+    }
+    rec.close();
+
+    wcscat_s(rec_txt, saved_player);
+    wsprintf(add, L"%d", result);
+    wcscat_s(rec_txt, L"\n\nСВЕТОВЕН РЕКОРД: ");
+    wcscat_s(rec_txt, add);
+
+    for (int i = 0; i < 150; ++i)
+    {
+        if (rec_txt[i] != '\0')rec_size++;
+        else break;
+    }
+
+    if (midTxtFormat && txtBrush)
+    {
+        Draw->BeginDraw();
+        Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+        Draw->DrawTextW(rec_txt, rec_size, midTxtFormat, D2D1::RectF(200.0f, 200.0f, scr_width, scr_height), txtBrush);
+        Draw->EndDraw();
+
+        Sleep(3000);
+    }
+}
+
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -956,6 +1007,11 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             break;
 
 
+        case mHoF:
+            pause = true;
+            HallOfFame();
+            pause = false;
+            break;
         }
         break;
 
@@ -1963,8 +2019,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         ErrExit(eClass);
     }
 
-
     CreateResources();
+
+    PlaySound(snd_file, NULL, SND_ASYNC | SND_LOOP);
 
     while (bMsg.message != WM_QUIT)
     {
@@ -2042,7 +2099,11 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                             }
 
                         }
-                        else if (what_to_do == states::heal)(*ev)->Heal();
+                        else if (what_to_do == states::heal)
+                        {
+                            if (sound)mciSendString(L"play .\\res\\snd\\heal.wav", NULL, NULL, NULL);
+                            (*ev)->Heal();
+                        }
                         else if (what_to_do == states::shoot)
                         {
                             if ((*ev)->GetType() == ev_archer_type)vEvilShots.push_back(dll::ShotFactory(ev_arrow_type,
@@ -2569,6 +2630,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
+        if (vGoodArmy.empty() || vEvilArmy.empty())GameOver();
 
         //////////////////////////////////////////////////////////////////
         
