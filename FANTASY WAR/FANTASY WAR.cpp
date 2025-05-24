@@ -140,6 +140,7 @@ bool b3Hglt = false;
 bool name_set = false;
 
 int score = 0;
+int turn = 0;
 
 //////////////////////////////////////////////////////
 
@@ -288,6 +289,7 @@ void InitGame()
     wcscpy_s(current_player, L"A KING");
     name_set = false;
     score = 0;
+    turn = 1;
 
     /////////////////////////////////////////////
 
@@ -329,8 +331,8 @@ void InitGame()
     {
         dll::Creatures OneWarrior{ nullptr };
 
-        float temp_x = (float)(RandMachine(0, 500));
-        float temp_y = (float)(RandMachine(450, 700));
+        float temp_x = (float)(RandMachine(0, 550));
+        float temp_y = (float)(RandMachine(400, 600));
 
         switch (RandMachine(0, 6))
         {
@@ -494,8 +496,8 @@ void InitGame()
     {
         dll::Creatures OneWarrior{ nullptr };
 
-        float temp_x = (float)(RandMachine(510, 950));
-        float temp_y = (float)(RandMachine(450, 700));
+        float temp_x = (float)(RandMachine(450, 950));
+        float temp_y = (float)(RandMachine(400, 600));
 
         switch (RandMachine(0, 6))
         {
@@ -1915,7 +1917,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                     {
                         bool someone_killed = false;
 
-
                         states what_to_do = (*ev)->AINextMove(EnemyLoc);
 
                         if (what_to_do == states::move)
@@ -1964,6 +1965,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 if (!((*gd)->start.x >= (*ev)->end.x || (*gd)->end.x <= (*ev)->start.x
                                     || (*gd)->start.y >= (*ev)->end.y || (*gd)->end.y <= (*ev)->start.y))
                                 {
+                                    if (sound)mciSendString(L"play .\\res\\snd\\hurt.wav", NULL, NULL, NULL);
                                     (*gd)->lifes -= (*ev)->Attack();
                                     (*ev)->lifes -= (*gd)->Attack();
                                     if ((*gd)->lifes <= 0 || (*ev)->lifes <= 0)
@@ -1973,11 +1975,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             score += 10;
                                             (*ev)->Release();
                                             vEvilArmy.erase(ev);
+                                            if (sound)mciSendString(L"play .\\res\\snd\\evilkilled.wav", NULL, NULL, NULL);
                                         }
                                         if ((*gd)->lifes <= 0)
                                         {
                                             (*gd)->Release();
                                             vGoodArmy.erase(gd);
+                                            if (sound)mciSendString(L"play .\\res\\snd\\killed.wav", NULL, NULL, NULL);
                                         }
 
                                         someone_killed = true;
@@ -2010,6 +2014,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                         ++good_next_turn;
                         if (good_next_turn >= vGoodArmy.size() &&vGoodShots.empty())
                         {
+                            ++turn;
                             good_next_turn_ready = true;
                             evil_next_turn_ready = false;
                             if (!vEvilArmy.empty())
@@ -2072,6 +2077,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                     (*gd)->lifes -= (*ev)->Attack();
                                     (*ev)->lifes -= (*gd)->Attack();
 
+                                    if (sound)mciSendString(L"play .\\res\\snd\\evilhurt.wav", NULL, NULL, NULL);
+
                                     if ((*gd)->lifes <= 0 || (*ev)->lifes <= 0)
                                     {
                                         if ((*ev)->lifes <= 0)
@@ -2079,11 +2086,13 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             score += 10;
                                             (*ev)->Release();
                                             vEvilArmy.erase(ev);
+                                            if (sound)mciSendString(L"play .\\res\\snd\\evilkilled.wav", NULL, NULL, NULL);
                                         }
                                         if ((*gd)->lifes <= 0)
                                         {
                                             (*gd)->Release();
                                             vGoodArmy.erase(gd);
+                                            if (sound)mciSendString(L"play .\\res\\snd\\killed.wav", NULL, NULL, NULL);
                                         }
                                         someone_killed = true;
                                         break;
@@ -2122,6 +2131,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 && (*shot)->center.y >= (*gd)->start.y && (*shot)->center.y <= (*gd)->end.y)
                             {
                                 (*gd)->lifes -= (*shot)->strenght;
+                                if (sound)mciSendString(L"play .\\res\\snd\\hurt.wav", NULL, NULL, NULL);
                                 
                                 (*shot)->Release();
                                 vEvilShots.erase(shot);
@@ -2130,6 +2140,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 {
                                     (*gd)->Release();
                                     vGoodArmy.erase(gd);
+                                    if (sound)mciSendString(L"play .\\res\\snd\\killed.wav", NULL, NULL, NULL);
                                 }
 
                                 someone_killed = true;
@@ -2165,14 +2176,17 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 && (*shot)->center.y >= (*gd)->start.y && (*shot)->center.y <= (*gd)->end.y)
                             {
                                 (*gd)->lifes -= (*shot)->strenght;
+                                if (sound)mciSendString(L"play .\\res\\snd\\evilhurt.wav", NULL, NULL, NULL);
 
                                 (*shot)->Release();
                                 vGoodShots.erase(shot);
 
                                 if ((*gd)->lifes <= 0)
                                 {
+                                    score += 10;
                                     (*gd)->Release();
                                     vEvilArmy.erase(gd);
+                                    if (sound)mciSendString(L"play .\\res\\snd\\evilkilled.wav", NULL, NULL, NULL);
                                 }
 
                                 someone_killed = true;
@@ -2231,6 +2245,31 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
         case field5_type:
             Draw->DrawBitmap(bmpField5[Field->GetFrame()], D2D1::RectF(0, 50.0f, scr_width, scr_height));
             break;
+        }
+
+        if (hgltBrush && midTxtFormat)
+        {
+            wchar_t stat_txt[100]{ L"Крал: " };
+            wchar_t add[5]{ L"\0" };
+            int stat_size = 0;
+
+            wcscat_s(stat_txt, current_player);
+
+            wcscat_s(stat_txt, L", ход: ");
+            wsprintf(add, L"%d", turn);
+            wcscat_s(stat_txt, add);
+
+            wcscat_s(stat_txt, L", резултат: ");
+            wsprintf(add, L"%d", score);
+            wcscat_s(stat_txt, add);
+
+            for (int i = 0; i < 100; ++i)
+            {
+                if (stat_txt[i] != '\0')stat_size++;
+                else break;
+            }
+
+            Draw->DrawTextW(stat_txt, stat_size, midTxtFormat, D2D1::RectF(20.0f, ground + 5.0f, scr_width, scr_height), hgltBrush);
         }
 
         ////////////////////////////////////////////////////////////////////
