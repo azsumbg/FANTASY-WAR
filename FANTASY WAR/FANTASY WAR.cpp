@@ -274,12 +274,126 @@ void ErrExit(int what)
     ClearResources();
     exit(1);
 }
+BOOL CheckRecord()
+{
+    if (score < 1)return no_record;
 
+    if (vEvilArmy.empty())
+    {
+        score += 50;
+
+        if (!vGoodArmy.empty())
+        {
+            for (int i = 0; i < vGoodArmy.size(); ++i)score += vGoodArmy[i]->lifes;
+        }
+    }
+
+    int result = 0;
+    CheckFile(record_file, &result);
+
+    if (result == FILE_NOT_EXIST)
+    {
+        std::wofstream rec(record_file);
+        rec << score << std::endl;
+        for (int i = 0; i < 16; ++i)rec << static_cast<int>(current_player[i]) << std::endl;
+        rec.close();
+        return first_record;
+    }
+    else
+    {
+        std::wifstream check(record_file);
+        check >> result;
+        check.close();
+    }
+
+    if (result < score)
+    {
+        std::wofstream rec(record_file);
+        rec << score << std::endl;
+        for (int i = 0; i < 16; ++i)rec << static_cast<int>(current_player[i]) << std::endl;
+        rec.close();
+        return record;
+    }
+
+    return no_record;
+}
 void GameOver()
 {
     PlaySound(NULL, NULL, NULL);
 
+    if (vEvilArmy.empty())
+    {
+        if (bigTxtFormat && hgltBrush)
+        {
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(L"ПОБЕДА", 7, bigTxtFormat,
+                D2D1::RectF(scr_width / 2 - 150.0f, scr_height / 2 - 100.0f, scr_width, scr_height), hgltBrush);
+            Draw->EndDraw();
 
+            if (sound)PlaySound(L".\\res\\snd\\victory.wav", NULL, SND_SYNC);
+            else Sleep(2000);
+        }
+    }
+    else
+    {
+        if (bigTxtFormat && hgltBrush)
+        {
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(L"ЗЛИТЕ ПОБЕДИХА", 15, bigTxtFormat,
+                D2D1::RectF(scr_width / 2 - 300.0f, scr_height / 2 - 100.0f, scr_width, scr_height), hgltBrush);
+            Draw->EndDraw();
+
+            if (sound)PlaySound(L".\\res\\snd\\defeat.wav", NULL, SND_SYNC);
+            else Sleep(2000);
+        }
+    }
+
+    switch (CheckRecord())
+    {
+    case no_record:
+        if (bigTxtFormat && hgltBrush)
+        {
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(L"НЯМА РЕКОРД !", 14, bigTxtFormat,
+                D2D1::RectF(scr_width / 2 - 300.0f, scr_height / 2 - 100.0f, scr_width, scr_height), hgltBrush);
+            Draw->EndDraw();
+
+            if (sound)PlaySound(L".\\res\\snd\\loose.wav", NULL, SND_SYNC);
+            else Sleep(2000);
+        }
+        break;
+
+    case first_record:
+        if (bigTxtFormat && hgltBrush)
+        {
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(L"ПЪРВИ РЕКОРД !", 15, bigTxtFormat,
+                D2D1::RectF(scr_width / 2 - 300.0f, scr_height / 2 - 100.0f, scr_width, scr_height), hgltBrush);
+            Draw->EndDraw();
+
+            if (sound)PlaySound(L".\\res\\snd\\record.wav", NULL, SND_SYNC);
+            else Sleep(2000);
+        }
+        break;
+
+    case record:
+        if (bigTxtFormat && hgltBrush)
+        {
+            Draw->BeginDraw();
+            Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
+            Draw->DrawTextW(L"СВЕТОВЕН РЕКОРД !", 18, bigTxtFormat,
+                D2D1::RectF(scr_width / 2 - 350.0f, scr_height / 2 - 100.0f, scr_width, scr_height), hgltBrush);
+            Draw->EndDraw();
+
+            if (sound)PlaySound(L".\\res\\snd\\record.wav", NULL, SND_SYNC);
+            else Sleep(2000);
+        }
+        break;
+    }
 
     bMsg.message = WM_QUIT;
     bMsg.wParam = 0;
@@ -1869,8 +1983,8 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             {
                 Draw->BeginDraw();
                 Draw->DrawBitmap(bmpIntro[Intro.GetFrame()], D2D1::RectF(0, 0, scr_width, scr_height));
-                Draw->DrawTextW(L"ПАУЗА", 6, bigTxtFormat, D2D1::RectF(scr_width / 2 - 150.0f, scr_height / 2 - 100.0f, scr_width, scr_height),
-                    txtBrush);
+                Draw->DrawTextW(L"ПАУЗА", 6, bigTxtFormat, 
+                    D2D1::RectF(scr_width / 2 - 150.0f, scr_height / 2 - 100.0f, scr_width, scr_height), txtBrush);
                 Draw->EndDraw();
             }
             continue;
