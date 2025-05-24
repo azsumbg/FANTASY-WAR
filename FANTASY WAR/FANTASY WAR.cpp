@@ -294,7 +294,7 @@ void InitGame()
     good_next_turn = 0;
     evil_next_turn = 0;
 
-    good_next_turn_ready = false;
+    good_next_turn_ready = true;
     evil_next_turn_ready = false;
 
     if (Field)delete Field;
@@ -626,7 +626,7 @@ void InitGame()
             break;
 
         case 6:
-            OneWarrior = dll::CreatureFactory(gd_warrior_type, temp_x, temp_y);
+            OneWarrior = dll::CreatureFactory(ev_warrior_type, temp_x, temp_y);
             if (!vEvilArmy.empty())
             {
                 bool is_ok = true;
@@ -646,7 +646,6 @@ void InitGame()
             else vEvilArmy.push_back(OneWarrior);
             break;
         }
-
     }
 
     /////////////////////////////////////////////
@@ -874,17 +873,75 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         }
         else
         {
+            if (!evil_next_turn_ready)
+            {
+                if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+                break;
+            }
+
             if (!vGoodArmy.empty())
             {
-                FPOINT cursor{ (float)(LOWORD(lParam)),(float)(HIWORD(lParam)) };
-
-                for (int i = 0; i < vGoodArmy.size(); ++i)
+                if (current_gd_creature < 0)
                 {
-                    if (cursor.x >= vGoodArmy[i]->start.x && cursor.x <= vGoodArmy[i]->end.x
-                        && cursor.y >= vGoodArmy[i]->start.y && cursor.y <= vGoodArmy[i]->end.y)
+                    FPOINT cursor{ (float)(LOWORD(lParam)),(float)(HIWORD(lParam)) };
+
+                    for (int i = 0; i < vGoodArmy.size(); ++i)
                     {
-                        current_gd_creature = i;
-                        if (sound)mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
+                        if (cursor.x >= vGoodArmy[i]->start.x && cursor.x <= vGoodArmy[i]->end.x
+                            && cursor.y >= vGoodArmy[i]->start.y && cursor.y <= vGoodArmy[i]->end.y)
+                        {
+                            current_gd_creature = i;
+
+                            if (vGoodArmy[current_gd_creature]->GetMovePoints() <= 0
+                                || vGoodArmy[current_gd_creature]->state == states::next_turn)
+                            {
+                                if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+                                current_gd_creature = -1;
+                                break;
+                            }
+                            else
+                            {
+                                if (sound)mciSendString(L"play .\\res\\snd\\select.wav", NULL, NULL, NULL);
+                                break;
+                            }
+                        }
+                    }
+                
+                    if (current_gd_creature < 0 && sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+                }
+                else
+                {
+                    if ((float)(LOWORD(lParam)) >= vGoodArmy[current_gd_creature]->start.x &&
+                        (float)(LOWORD(lParam)) <= vGoodArmy[current_gd_creature]->end.x &&
+                        (float)(HIWORD(lParam)) >= vGoodArmy[current_gd_creature]->start.y &&
+                        (float)(HIWORD(lParam)) <= vGoodArmy[current_gd_creature]->end.y)
+                    {
+                        vGoodArmy[current_gd_creature]->state = states::heal;
+                        if (sound)mciSendString(L"play .\\res\\snd\\heal.wav", NULL, NULL, NULL);
+                        current_gd_creature = -1;
+                        break;
+                    }
+                    
+                    if (vGoodArmy[current_gd_creature]->GetType() == gd_archer_type)
+                    {
+                        vGoodShots.push_back(dll::ShotFactory(gd_arrow_type, vGoodArmy[current_gd_creature]->center.x,
+                            vGoodArmy[current_gd_creature]->center.y, (float)(LOWORD(lParam)), (float)(HIWORD(lParam))));
+                        
+                        vGoodShots.back()->strenght = vGoodArmy[current_gd_creature]->strenght;
+
+                        if (vGoodArmy[current_gd_creature]->center.x > LOWORD(lParam))vGoodShots.back()->dir = dirs::up_left;
+                        else vGoodShots.back()->dir = dirs::up_right;
+                    
+                        vGoodArmy[current_gd_creature]->SetMovePoints(0);
+                        vGoodArmy[current_gd_creature]->state = states::next_turn;
+                        current_gd_creature = -1;
+                    }
+                    else
+                    {
+                        vGoodArmy[current_gd_creature]->state = states::move;
+                        vGoodArmy[current_gd_creature]->move_ex = (float)(LOWORD(lParam));
+                        vGoodArmy[current_gd_creature]->move_ey = (float)(HIWORD(lParam));
+                        current_gd_creature = -1;
                         break;
                     }
                 }
@@ -892,6 +949,9 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
         }
         break;
 
+    case WM_RBUTTONDOWN:
+        current_gd_creature = -1;
+        break;
 
     default: return DefWindowProc(hwnd, ReceivedMsg, wParam, lParam);
     }
@@ -1822,7 +1882,29 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             {
                 evil_next_turn = 0;
 
-                if (!vGoodArmy.empty())
+                for (std::vector<dll::Creatures>::iterator ev = vEvilArmy.begin(); ev < vEvilArmy.end(); ev++)
+                {
+                    if ((*ev)->state == states::next_turn && vEvilShots.empty())
+                    {
+                        ++evil_next_turn;
+                        if (evil_next_turn >= vEvilArmy.size())
+                        {
+                            evil_next_turn_ready = true;
+                            good_next_turn_ready = false;
+                            if (!vGoodArmy.empty())
+                                for (int i = 0; i < vGoodArmy.size(); ++i)
+                                {
+                                    vGoodArmy[i]->state = states::stop;
+                                    vGoodArmy[i]->SetMovePoints(vGoodArmy[i]->GetMaxMovePoints());
+                                }
+                            if (sound)mciSendString(L"play .\\res\\snd\\levelup.wav", NULL, NULL, NULL);
+                            MessageBox(bHwnd, L"СЛЕДВАЩ ХОД НА ДОБРИТЕ !", L"Следващ ход !", MB_OK | MB_APPLMODAL
+                                | MB_ICONINFORMATION);
+                            break;
+                        }
+                    }
+                }
+                if (!vGoodArmy.empty() && !evil_next_turn_ready)
                 {
                     dll::GROUPPER<FPOINT> EnemyLoc(vGoodArmy.size());
 
@@ -1831,57 +1913,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
 
                     for (std::vector<dll::Creatures>::iterator ev = vEvilArmy.begin(); ev < vEvilArmy.end(); ev++)
                     {
-                        states what_to_do = (*ev)->AINextMove(EnemyLoc);
                         bool someone_killed = false;
 
-                        if ((*ev)->state == states::stop)
+
+                        states what_to_do = (*ev)->AINextMove(EnemyLoc);
+
+                        if (what_to_do == states::move)
                         {
-                            if (what_to_do == states::attack)
+                            if (!(*ev)->Move(EnemyLoc.begin().x, EnemyLoc.begin().y))
                             {
-                                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); ++gd)
-                                {
-                                    if ((*ev)->center.x >= (*gd)->center.x)(*ev)->dir = dirs::left;
-                                    else (*ev)->dir = dirs::right;
-
-                                    if (!((*gd)->start.x >= (*ev)->end.x || (*gd)->end.x <= (*ev)->start.x
-                                        || (*gd)->start.y >= (*ev)->end.y || (*gd)->end.y <= (*ev)->start.y))
-                                    {
-                                        (*gd)->lifes -= (*ev)->Attack();
-                                        (*ev)->lifes -= (*gd)->Attack();
-                                        if ((*gd)->lifes <= 0 || (*ev)->lifes <= 0)
-                                        {
-                                            if ((*ev)->lifes <= 0)
-                                            {
-                                                score += 10;
-                                                (*ev)->Release();
-                                                vEvilArmy.erase(ev);
-                                            }
-                                            if ((*gd)->lifes <= 0)
-                                            {
-                                                (*gd)->Release();
-                                                vGoodArmy.erase(gd);
-                                            }
-                                            someone_killed = true;
-                                            break;
-                                        }
-
-                                    }
-                                }
+                                (*ev)->state = states::next_turn;
+                                continue;
                             }
-                            else (*ev)->Heal();
-                        }
 
-                        if (what_to_do == states::next_turn)
-                        {
-                            ++evil_next_turn;
-                            if (evil_next_turn >= vEvilArmy.size())
-                            {
-                                evil_next_turn_ready = true;
-                                break;
-                            }
-                            continue;
                         }
-                        else if (what_to_do == states::move) (*ev)->Move(EnemyLoc.begin().x, EnemyLoc.begin().y);
                         else if (what_to_do == states::heal)(*ev)->Heal();
                         else if (what_to_do == states::shoot)
                         {
@@ -1889,12 +1934,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 (*ev)->center.x, (*ev)->center.y, EnemyLoc.begin().x, EnemyLoc.begin().y));
                             else if ((*ev)->GetType() == ev_mage_type)vEvilShots.push_back(dll::ShotFactory(fireball_type,
                                 (*ev)->center.x, (*ev)->center.y, EnemyLoc.begin().x, EnemyLoc.begin().y));
-                            
+
                             vEvilShots.back()->strenght = (*ev)->Attack();
                             if (vEvilShots.back()->GetType() == fireball_type)
                             {
                                 if ((*ev)->center.x > EnemyLoc.begin().x)vEvilShots.back()->dir = dirs::left;
-                                else vEvilShots.back()->dir = dirs::right;                   
+                                else vEvilShots.back()->dir = dirs::right;
                             }
                             else
                             {
@@ -1906,9 +1951,16 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                         {
                             for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); ++gd)
                             {
-                                if ((*ev)->center.x >= (*gd)->center.x)(*ev)->dir = dirs::left;
-                                else (*ev)->dir = dirs::right;
-
+                                if ((*ev)->center.x >= (*gd)->center.x)
+                                {
+                                    (*ev)->dir = dirs::left;
+                                    (*gd)->dir = dirs::right;
+                                }
+                                else
+                                {
+                                    (*ev)->dir = dirs::right;
+                                    (*gd)->dir = dirs::left;
+                                }
                                 if (!((*gd)->start.x >= (*ev)->end.x || (*gd)->end.x <= (*ev)->start.x
                                     || (*gd)->start.y >= (*ev)->end.y || (*gd)->end.y <= (*ev)->start.y))
                                 {
@@ -1927,6 +1979,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                             (*gd)->Release();
                                             vGoodArmy.erase(gd);
                                         }
+
                                         someone_killed = true;
                                         break;
                                     }
@@ -1934,31 +1987,114 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                                 }
                             }
                         }
-                        
+
                         if (someone_killed)break;
                     }
                 }
-                else GameOver();
-            }
-            else
-            {
-                if (!vGoodArmy.empty())
-                    for (int i = 0; i < vGoodArmy.size(); ++i)vGoodArmy[i]->state = states::heal;
-                good_next_turn_ready = false;
+                else if (vGoodArmy.empty())GameOver();
             }
         }
-        
+
         if (!vGoodArmy.empty())
         {
             if (!good_next_turn_ready)
             {
-               
-            }
-            else
-            {
-                if (!vEvilArmy.empty())
-                    for (int i = 0; i < vEvilArmy.size(); ++i)vEvilArmy[i]->state = states::heal;
-                evil_next_turn_ready = false;
+                good_next_turn = 0;
+
+                for (std::vector<dll::Creatures>::iterator gd = vGoodArmy.begin(); gd < vGoodArmy.end(); ++gd)
+                {
+                    bool someone_killed = false;
+
+                    if ((*gd)->state == states::next_turn)
+                    {
+                        ++good_next_turn;
+                        if (good_next_turn >= vGoodArmy.size() &&vGoodShots.empty())
+                        {
+                            good_next_turn_ready = true;
+                            evil_next_turn_ready = false;
+                            if (!vEvilArmy.empty())
+                            {
+                                for (int i = 0; i < vEvilArmy.size(); ++i) vEvilArmy[i]->state = states::heal;
+                            }
+                              
+                            if (vGoodArmy.empty())for (int i = 0; i < vGoodArmy.size(); ++i)
+                                vGoodArmy[i]->SetMovePoints(vGoodArmy[i]->GetMaxMovePoints());
+                            if (sound)mciSendString(L"play .\\res\\snd\\levelup.wav", NULL, NULL, NULL);
+                            MessageBox(bHwnd, L"СЛЕДВАЩ ХОД НА ЗЛИТЕ !", L"Следващ ход !", MB_OK | MB_APPLMODAL | MB_ICONINFORMATION);
+                            break;
+                        }
+                    }
+                    else if ((*gd)->GetMovePoints() <= 0)
+                    {
+                        (*gd)->state = states::next_turn;
+                        continue;
+                    }
+                    else
+                    {
+                        if ((*gd)->state == states::move)
+                        {
+                            if (!(*gd)->Move((*gd)->move_ex, (*gd)->move_ey))
+                            {
+                                
+                                (*gd)->state = states::next_turn;
+                                current_gd_creature = -1;
+                            }
+                        }
+                        else if ((*gd)->state == states::heal)
+                        {
+                            (*gd)->Heal();
+                            (*gd)->SetMovePoints(0);
+                            (*gd)->state = states::next_turn;
+                            current_gd_creature = -1;
+                        }
+                     
+                        if (!vEvilArmy.empty())
+                        {
+                            for (std::vector<dll::Creatures>::iterator ev = vEvilArmy.begin(); ev < vEvilArmy.end(); ++ev)
+                            {
+                                if ((*ev)->center.x >= (*gd)->center.x)
+                                {
+                                    (*ev)->dir = dirs::left;
+                                    (*gd)->dir = dirs::right;
+                                }
+                                else
+                                {
+                                    (*ev)->dir = dirs::right;
+                                    (*gd)->dir = dirs::left;
+                                }
+
+                                if (!((*gd)->start.x >= (*ev)->end.x || (*gd)->end.x <= (*ev)->start.x
+                                    || (*gd)->start.y >= (*ev)->end.y || (*gd)->end.y <= (*ev)->start.y))
+                                {
+                                    (*gd)->SetMovePoints(0);
+                                    (*gd)->state = states::next_turn;
+
+                                    (*gd)->lifes -= (*ev)->Attack();
+                                    (*ev)->lifes -= (*gd)->Attack();
+
+                                    if ((*gd)->lifes <= 0 || (*ev)->lifes <= 0)
+                                    {
+                                        if ((*ev)->lifes <= 0)
+                                        {
+                                            score += 10;
+                                            (*ev)->Release();
+                                            vEvilArmy.erase(ev);
+                                        }
+                                        if ((*gd)->lifes <= 0)
+                                        {
+                                            (*gd)->Release();
+                                            vGoodArmy.erase(gd);
+                                        }
+                                        someone_killed = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (someone_killed)break;
+                }
             }
         }
 
@@ -2007,16 +2143,49 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 if (someone_killed)break;
             }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        if (!vGoodShots.empty())
+        {
+            for (std::vector<dll::Shot>::iterator shot = vGoodShots.begin(); shot < vGoodShots.end(); ++shot)
+            {
+                bool someone_killed = false;
+
+                if (!(*shot)->Move())
+                {
+                    (*shot)->Release();
+                    vGoodShots.erase(shot);
+                    break;
+                }
+                else
+                {
+                    if (!vEvilArmy.empty())
+                    {
+                        for (std::vector<dll::Creatures>::iterator gd = vEvilArmy.begin(); gd < vEvilArmy.end(); ++gd)
+                        {
+                            if ((*shot)->center.x >= (*gd)->start.x && (*shot)->center.x <= (*gd)->end.x
+                                && (*shot)->center.y >= (*gd)->start.y && (*shot)->center.y <= (*gd)->end.y)
+                            {
+                                (*gd)->lifes -= (*shot)->strenght;
+
+                                (*shot)->Release();
+                                vGoodShots.erase(shot);
+
+                                if ((*gd)->lifes <= 0)
+                                {
+                                    (*gd)->Release();
+                                    vEvilArmy.erase(gd);
+                                }
+
+                                someone_killed = true;
+
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (someone_killed)break;
+            }
+        }
         
         // DRAW THINGS *****************************************************
 
@@ -2207,7 +2376,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
-
         if (!vEvilShots.empty())
         {
             for (std::vector<dll::Shot>::iterator shot = vEvilShots.begin(); shot < vEvilShots.end(); ++shot)
@@ -2233,7 +2401,20 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
             }
         }
-
+        if (!vGoodShots.empty())
+        {
+            for (std::vector<dll::Shot>::iterator shot = vGoodShots.begin(); shot < vGoodShots.end(); ++shot)
+            {
+                if ((*shot)->dir == dirs::up_left)Draw->DrawBitmap(bmpGdArrowLU, D2D1::RectF((*shot)->start.x,
+                    (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                else if ((*shot)->dir == dirs::up_right)Draw->DrawBitmap(bmpGdArrowRU, D2D1::RectF((*shot)->start.x,
+                    (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                else if ((*shot)->dir == dirs::down_left)Draw->DrawBitmap(bmpGdArrowLD, D2D1::RectF((*shot)->start.x,
+                    (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+                else if ((*shot)->dir == dirs::down_right)Draw->DrawBitmap(bmpGdArrowRD, D2D1::RectF((*shot)->start.x,
+                    (*shot)->start.y, (*shot)->end.x, (*shot)->end.y));
+            }
+        }
 
 
         //////////////////////////////////////////////////////////////////
