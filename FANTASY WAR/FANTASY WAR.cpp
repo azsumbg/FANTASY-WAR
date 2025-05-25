@@ -448,7 +448,7 @@ void InitGame()
         dll::Creatures OneWarrior{ nullptr };
 
         float temp_x = (float)(RandMachine(0, 550));
-        float temp_y = (float)(RandMachine(400, 600));
+        float temp_y = (float)(RandMachine(420, 600));
 
         switch (RandMachine(0, 6))
         {
@@ -614,7 +614,7 @@ void InitGame()
         dll::Creatures OneWarrior{ nullptr };
 
         float temp_x = (float)(RandMachine(450, 950));
-        float temp_y = (float)(RandMachine(400, 600));
+        float temp_y = (float)(RandMachine(420, 600));
 
         switch (RandMachine(0, 6))
         {
@@ -1001,6 +1001,61 @@ void LoadGame()
 
     MessageBox(bHwnd, L"Играта е заредена !", L"Зареждане !", MB_OK | MB_APPLMODAL | MB_ICONINFORMATION);
 }
+void ShowHelp()
+{
+    int result = 0;
+    CheckFile(help_file, &result);
+    if (result == FILE_NOT_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+        MessageBox(bHwnd, L"Липсва помощ за играта !\n\nСвържете се с разработчика !", L"Липсва файл !",
+            MB_OK | MB_APPLMODAL | MB_ICONEXCLAMATION);
+        return;
+    }
+
+    wchar_t hlp_txt[1000] = L"\0";
+
+    std::wifstream hlp(help_file);
+    hlp >> result;
+
+    for (int i = 0; i < result; ++i)
+    {
+        int letter = 0;
+        hlp >> letter;
+        hlp_txt[i] = static_cast<wchar_t>(letter);
+    }
+
+    hlp.close();
+
+    if (sound)mciSendString(L"play .\\res\\snd\\help.wav", NULL, NULL, NULL);
+
+    Draw->BeginDraw();
+
+    if (txtBrush && hgltBrush && inactBrush && nrmTxtFormat && statBckgBrush && but1BckgBrush && but2BckgBrush && but3BckgBrush)
+    {
+        Draw->FillRectangle(D2D1::RectF(0, 0, scr_width, 50.0f), statBckgBrush);
+        Draw->FillRoundedRectangle(D2D1::RoundedRect(b1Rect, 10.0f, 15.0f), but1BckgBrush);
+        Draw->FillRoundedRectangle(D2D1::RoundedRect(b2Rect, 10.0f, 15.0f), but2BckgBrush);
+        Draw->FillRoundedRectangle(D2D1::RoundedRect(b3Rect, 10.0f, 15.0f), but3BckgBrush);
+
+        if (name_set)Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, inactBrush);
+        else
+        {
+            if (b1Hglt)Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, hgltBrush);
+            else Draw->DrawTextW(L"ИМЕ НА ИГРАЧ", 13, nrmTxtFormat, b1TxtRect, txtBrush);
+        }
+        if (b2Hglt)Draw->DrawTextW(L"ЗВУЦИ ON / OFF", 15, nrmTxtFormat, b2TxtRect, hgltBrush);
+        else Draw->DrawTextW(L"ЗВУЦИ ON / OFF", 15, nrmTxtFormat, b2TxtRect, txtBrush);
+        if (b3Hglt)Draw->DrawTextW(L"ПОМОЩ ЗА ИГРАТА", 16, nrmTxtFormat, b3TxtRect, hgltBrush);
+        else Draw->DrawTextW(L"ПОМОЩ ЗА ИГРАТА", 16, nrmTxtFormat, b3TxtRect, txtBrush);
+
+        Draw->DrawBitmap(bmpIntro[0], D2D1::RectF(0, 50.0f, scr_width, scr_height));
+
+        Draw->DrawTextW(hlp_txt, result, midTxtFormat, D2D1::RectF(5.0f, 50.0f, scr_width, scr_height), txtBrush);
+    }
+    
+    Draw->EndDraw();
+}
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1231,6 +1286,22 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
                     break;
                 }
             }
+            if (LOWORD(lParam) >= b3Rect.left && LOWORD(lParam) <= b3Rect.right)
+            {
+                if (!show_help)
+                {
+                    show_help = true;
+                    pause = true;
+                    ShowHelp();
+                    break;
+                }
+                else
+                {
+                    show_help = false;
+                    pause = false;
+                    break;
+                }
+            }
         }
         else
         {
@@ -1316,8 +1387,6 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
 
     default: return DefWindowProc(hwnd, ReceivedMsg, wParam, lParam);
     }
-
-
 
     return (LRESULT)(FALSE);
 }
