@@ -441,6 +441,7 @@ void InitGame()
     //CREATE GOOD ARMY *************************
 
     if (!vGoodArmy.empty())for (int i = 0; i < vGoodArmy.size(); ++i)ClearHeap(&vGoodArmy[i]);
+    vGoodArmy.clear();
 
     while (vGoodArmy.size() < 10)
     {
@@ -606,6 +607,7 @@ void InitGame()
     //CREATE EVIL ARMY *************************
 
     if (!vEvilArmy.empty())for (int i = 0; i < vEvilArmy.size(); ++i)ClearHeap(&vEvilArmy[i]);
+    vEvilArmy.clear();
 
     while (vEvilArmy.size() < 10) 
     {
@@ -893,8 +895,46 @@ void LoadGame()
             L"Презапис", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)return;
     }
 
-    InitGame();
+    //////////////////////////////////////////
 
+    if (Field)delete Field;
+    switch (RandMachine(0, 4))
+    {
+    case 0:
+        Field = new dll::BASE(field1_type, 0, 50.0f);
+        break;
+
+    case 1:
+        Field = new dll::BASE(field2_type, 0, 50.0f);
+        break;
+
+    case 2:
+        Field = new dll::BASE(field3_type, 0, 50.0f);
+        break;
+
+    case 3:
+        Field = new dll::BASE(field4_type, 0, 50.0f);
+        break;
+
+    case 4:
+        Field = new dll::BASE(field5_type, 0, 50.0f);
+        break;
+    }
+
+    if (!vGoodArmy.empty())for (int i = 0; i < vGoodArmy.size(); ++i)ClearHeap(&vGoodArmy[i]);
+    vGoodArmy.clear();
+
+    if (!vEvilArmy.empty())for (int i = 0; i < vEvilArmy.size(); ++i)ClearHeap(&vEvilArmy[i]);
+    vEvilArmy.clear();
+
+    if (!vEvilShots.empty())for (int i = 0; i < vEvilShots.size(); ++i)ClearHeap(&vEvilShots[i]);
+    vEvilShots.clear();
+
+    if (!vGoodShots.empty())for (int i = 0; i < vGoodShots.size(); ++i)ClearHeap(&vGoodShots[i]);
+    vGoodShots.clear();
+
+    ///////////////////////////////////////////
+    
     std::wifstream save(save_file);
 
     save >> score;
