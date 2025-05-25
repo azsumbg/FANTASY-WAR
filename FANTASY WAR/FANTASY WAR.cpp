@@ -57,9 +57,9 @@ D2D1_RECT_F b1Rect{ 0, 0, scr_width / 3 - 50.0f, 50.0f };
 D2D1_RECT_F b2Rect{ scr_width / 3, 0, scr_width * 2 / 3 - 50.0f, 50.0f };
 D2D1_RECT_F b3Rect{ scr_width * 2 / 3, 0, scr_width - 50.0f, 50.0f };
 
-D2D1_RECT_F b1TxtRect{ 20.0f, 10.0f, scr_width / 3 - 50.0f, 50.0f };
-D2D1_RECT_F b2TxtRect{ scr_width / 3 + 20.0f, 10.0f, scr_width * 2 / 3 - 50.0f, 50.0f };
-D2D1_RECT_F b3TxtRect{ scr_width * 2 / 3 + 20.0f, 10.0f, scr_width - 50.0f, 50.0f };
+D2D1_RECT_F b1TxtRect{ 40.0f, 10.0f, scr_width / 3 - 50.0f, 50.0f };
+D2D1_RECT_F b2TxtRect{ scr_width / 3 + 40.0f, 10.0f, scr_width * 2 / 3 - 50.0f, 50.0f };
+D2D1_RECT_F b3TxtRect{ scr_width * 2 / 3 + 40.0f, 10.0f, scr_width - 50.0f, 50.0f };
 
 ID2D1Factory* iFactory{ nullptr };
 ID2D1HwndRenderTarget* Draw{ nullptr };
@@ -280,7 +280,7 @@ BOOL CheckRecord()
 
     if (vEvilArmy.empty())
     {
-        score += 50;
+        score += 10 * turn;
 
         if (!vGoodArmy.empty())
         {
@@ -319,6 +319,7 @@ BOOL CheckRecord()
 }
 void GameOver()
 {
+    Draw->EndDraw();
     PlaySound(NULL, NULL, NULL);
 
     if (vEvilArmy.empty())
@@ -822,7 +823,144 @@ void HallOfFame()
         Sleep(3000);
     }
 }
+void SaveGame()
+{
+    int result = 0;
+    CheckFile(save_file, &result);
+    if (result == FILE_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\exclamation.wav", NULL, NULL, NULL);
+        if (MessageBox(bHwnd, L"Съществува запис, който ще презапишеш !\n\n Презаписваш ли го ?",
+            L"Презапис", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)return;
+    }
 
+    std::wofstream save(save_file);
+
+    save << score << std::endl;
+    save << turn << std::endl;
+    save << evil_next_turn_ready << std::endl;
+    save << good_next_turn_ready << std::endl;
+    for (int i = 0; i < 16; ++i)save << static_cast<int>(current_player[i]) << std::endl;
+    save << name_set << std::endl;
+
+    save << vGoodArmy.size() << std::endl;
+    if (vGoodArmy.size() > 0)
+    {
+        for (int i = 0; i < vGoodArmy.size(); ++i)
+        {
+            save << static_cast<int>(vGoodArmy[i]->GetType()) << std::endl;
+            save << vGoodArmy[i]->start.x << std::endl;
+            save << vGoodArmy[i]->start.y << std::endl;
+            save << vGoodArmy[i]->lifes << std::endl;
+            save << vGoodArmy[i]->GetMovePoints() << std::endl;
+        }
+    }
+
+    save << vEvilArmy.size() << std::endl;
+    if (vEvilArmy.size() > 0)
+    {
+        for (int i = 0; i < vEvilArmy.size(); ++i)
+        {
+            save << static_cast<int>(vEvilArmy[i]->GetType()) << std::endl;
+            save << vEvilArmy[i]->start.x << std::endl;
+            save << vEvilArmy[i]->start.y << std::endl;
+            save << vEvilArmy[i]->lifes << std::endl;
+            save << vEvilArmy[i]->GetMovePoints() << std::endl;
+        }
+    }
+
+    save.close();
+
+    if (sound)mciSendString(L"play .\\res\\snd\\save.wav", NULL, NULL, NULL);
+
+    MessageBox(bHwnd, L"Играта е запазена !", L"Запис !", MB_OK | MB_APPLMODAL | MB_ICONINFORMATION);
+}
+void LoadGame()
+{
+    int result = 0;
+    CheckFile(save_file, &result);
+    if (result == FILE_NOT_EXIST)
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\negative.wav", NULL, NULL, NULL);
+        MessageBox(bHwnd, L"Все още няма записана игра !\n\nПостарай се повече !", L"Липсва файл !",
+            MB_OK | MB_APPLMODAL | MB_ICONEXCLAMATION);
+        return;
+    }
+    else
+    {
+        if (sound)mciSendString(L"play .\\res\\snd\\exclamation.wav", NULL, NULL, NULL);
+        if (MessageBox(bHwnd, L"  Настоящата игра ще бъде изгубена !\n\n Презаписваш ли я ?",
+            L"Презапис", MB_YESNO | MB_APPLMODAL | MB_ICONQUESTION) == IDNO)return;
+    }
+
+    InitGame();
+
+    std::wifstream save(save_file);
+
+    save >> score;
+    save >> turn;
+    save >> evil_next_turn_ready;
+    save >> good_next_turn_ready;
+    for (int i = 0; i < 16; ++i)
+    {
+        int letter = 0;
+        save >> letter;
+        current_player[i] = static_cast<wchar_t>(letter);
+    }
+    save >> name_set;
+
+    save >> result;
+    if (result > 0)
+    {
+        for (int i = 0; i < result; ++i)
+        {
+            int ttype = 0;
+            float tx = 0;
+            float ty = 0;
+            int tlifes = 0;
+            int tmove = 0;
+
+            save >> ttype;
+            save >> tx;
+            save >> ty;
+            save >> tlifes;
+            save >> tmove;
+
+            vGoodArmy.push_back(dll::CreatureFactory(static_cast<uint8_t>(ttype), tx, ty));
+            vGoodArmy.back()->lifes = tlifes;
+            vGoodArmy.back()->SetMovePoints(tmove);
+        }
+    }
+
+    save >> result;
+    if (result > 0)
+    {
+        for (int i = 0; i < result; ++i)
+        {
+            int ttype = 0;
+            float tx = 0;
+            float ty = 0;
+            int tlifes = 0;
+            int tmove = 0;
+
+            save >> ttype;
+            save >> tx;
+            save >> ty;
+            save >> tlifes;
+            save >> tmove;
+
+            vEvilArmy.push_back(dll::CreatureFactory(static_cast<uint8_t>(ttype), tx, ty));
+            vEvilArmy.back()->lifes = tlifes;
+            vEvilArmy.back()->SetMovePoints(tmove);
+        }
+    }
+
+    save.close();
+
+    if (sound)mciSendString(L"play .\\res\\snd\\save.wav", NULL, NULL, NULL);
+
+    MessageBox(bHwnd, L"Играта е заредена !", L"Зареждане !", MB_OK | MB_APPLMODAL | MB_ICONINFORMATION);
+}
 
 INT_PTR CALLBACK DlgProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -1006,6 +1144,17 @@ LRESULT CALLBACK WinProc(HWND hwnd, UINT ReceivedMsg, WPARAM wParam, LPARAM lPar
             SendMessage(hwnd, WM_CLOSE, NULL, NULL);
             break;
 
+        case mSave:
+            pause = true;
+            SaveGame();
+            pause = false;
+            break;
+
+        case mLoad:
+            pause = true;
+            LoadGame();
+            pause = false;
+            break;
 
         case mHoF:
             pause = true;
@@ -2515,6 +2664,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
                 }
                 Draw->DrawTextW(add, lsize, nrmTxtFormat, D2D1::RectF(vGoodArmy[i]->center.x - 30.0f, vGoodArmy[i]->end.y + 5.0f,
                     vGoodArmy[i]->center.x + 30.0f, vGoodArmy[i]->end.y + 5.0f), txtBrush);
+                Draw->DrawLine(D2D1::Point2F(vGoodArmy[i]->start.x + 10.0f, vGoodArmy[i]->start.y),
+                    D2D1::Point2F(vGoodArmy[i]->start.x + 10.0f + (float)(vGoodArmy[i]->GetMovePoints() / 5), vGoodArmy[i]->start.y),
+                    txtBrush, 5.0f);
             }
             if (current_gd_creature >= 0)Draw->DrawEllipse(D2D1::Ellipse(D2D1::Point2F(vGoodArmy[current_gd_creature]->center.x,
                 vGoodArmy[current_gd_creature]->center.y), vGoodArmy[current_gd_creature]->x_radius,
@@ -2630,11 +2782,12 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance
             }
         }
 
-        if (vGoodArmy.empty() || vEvilArmy.empty())GameOver();
-
         //////////////////////////////////////////////////////////////////
         
         Draw->EndDraw();
+
+        if (vGoodArmy.empty() || vEvilArmy.empty())GameOver();
+
     }
 
     ClearResources();
